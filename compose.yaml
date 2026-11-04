@@ -1,0 +1,18 @@
+services:
+  mag-remote:
+    # Use the published image, or comment this out and keep `build: .`
+    # to build from this repository (e.g. a Komodo stack pointed at the repo).
+    image: ghcr.io/simpat1zq/mag-remote:latest
+    build: .
+    container_name: mag-remote
+    # Host networking lets the container broadcast on your LAN to find boxes.
+    network_mode: host
+    environment:
+      PORT: "8080"            # web UI port on the host
+      # BASIC_AUTH: "user:password"   # optional login for the web UI
+    volumes:
+      - mag-remote-data:/data # your boxes are saved here
+    restart: unless-stopped
+
+volumes:
+  mag-remote-data:

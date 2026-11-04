@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#141320">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MAG Remote</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+@font-face { font-family: "Barlow"; font-weight: 400; font-display: swap; src: url(fonts/barlow-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Barlow"; font-weight: 500; font-display: swap; src: url(fonts/barlow-latin-500-normal.woff2) format("woff2"); }
+@font-face { font-family: "Barlow"; font-weight: 600; font-display: swap; src: url(fonts/barlow-latin-600-normal.woff2) format("woff2"); }
+@font-face { font-family: "Barlow Semi Condensed"; font-weight: 500; font-display: swap; src: url(fonts/barlow-semi-condensed-latin-500-normal.woff2) format("woff2"); }
+@font-face { font-family: "Barlow Semi Condensed"; font-weight: 600; font-display: swap; src: url(fonts/barlow-semi-condensed-latin-600-normal.woff2) format("woff2"); }
+
+:root {
+  --night: #141320;
+  --night-2: #1c1a2b;
+  --body: #23222f;
+  --body-hi: #2c2b3a;
+  --putty: #e4ded2;
+  --putty-shade: #a9a294;
+  --ink: #2a2833;
+  --dark-key: #3a3947;
+  --dark-key-shade: #17161f;
+  --dark-legend: #d6d1e2;
+  --muted: #9a95ab;
+  --text: #ece8f4;
+  --red: #d9473b; --green: #3e9b5c; --yellow: #e3b23c; --blue: #3c74c9;
+  --ok: #57c27f;
+  --panel: #1f1d2d;
+  --line: #36344a;
+  --focus: #8fb4ff;
+  --ui: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --legend: "Barlow Semi Condensed", "Barlow", "Roboto Condensed", "Arial Narrow", sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --night: #dcd8e4; --night-2: #cfcadb; --panel: #f6f4f9; --line: #d4cfdf;
+    --text: #23212c; --muted: #6b6679; --focus: #2f5fd0; color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --night: #dcd8e4; --night-2: #cfcadb; --panel: #f6f4f9; --line: #d4cfdf;
+  --text: #23212c; --muted: #6b6679; --focus: #2f5fd0; color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: radial-gradient(120% 70% at 50% 0%, var(--night-2), var(--night) 70%);
+  background-color: var(--night);
+  color: var(--text);
+  font: 400 16px/1.45 var(--ui);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ------------------------------------------------------------ top bar */
+.topbar {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; gap: 8px;
+  padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
+  max-width: 460px; margin: 0 auto;
+}
+.icon-btn {
+  width: 44px; height: 44px; display: grid; place-items: center;
+  border: 0; border-radius: 12px; background: transparent;
+}
+.icon-btn:hover { background: color-mix(in srgb, var(--text) 8%, transparent); }
+.icon-btn svg { width: 24px; height: 24px; }
+.box-picker {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px;
+  border: 0; background: transparent; padding: 6px 8px; border-radius: 12px; text-align: left;
+}
+.box-picker:hover { background: color-mix(in srgb, var(--text) 8%, transparent); }
+.box-picker .name { font-weight: 600; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.box-picker .sub { color: var(--muted); font-size: 13px; }
+
+/* ------------------------------------------------------------ handset */
+main { padding: 4px 16px calc(32px + env(safe-area-inset-bottom)); }
+.handset {
+  position: relative;
+  max-width: 340px; margin: 6px auto 0;
+  padding: 22px 22px 30px;
+  background: linear-gradient(180deg, var(--body-hi), var(--body) 30%, #1e1d29);
+  border-radius: 42px 42px 60px 60px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.09),
+    inset 0 -2px 0 rgba(0,0,0,.35),
+    0 40px 70px -30px rgba(0,0,0,.75),
+    0 0 0 1px rgba(0,0,0,.25);
+  user-select: none; -webkit-user-select: none; touch-action: manipulation;
+}
+.handset[aria-disabled="true"] .key { opacity: .35; pointer-events: none; }
+
+.led {
+  position: absolute; top: 12px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px;
+  border-radius: 50%; background: #4a2a2a; box-shadow: inset 0 1px 1px rgba(0,0,0,.5);
+}
+.led.on { background: #ff5a45; box-shadow: 0 0 10px 2px rgba(255,90,69,.7); transition: none; }
+.led.err { background: #ffb02e; box-shadow: 0 0 10px 2px rgba(255,176,46,.7); }
+.led { transition: background .35s, box-shadow .35s; }
+
+.row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.row + .row, .row + .dpad, .dpad + .row, .row + .numpad, .row + .colors, .colors + .row { margin-top: 18px; }
+
+.key {
+  position: relative;
+  display: grid; place-items: center;
+  border: 0; padding: 0;
+  font: 600 14px/1 var(--legend); letter-spacing: .01em;
+  transition: transform .06s, box-shadow .06s, filter .2s;
+}
+.key svg { width: 22px; height: 22px; }
+.key:disabled { opacity: .3; cursor: not-allowed; }
+.putty { background: var(--putty); color: var(--ink); box-shadow: 0 3px 0 var(--putty-shade), inset 0 1px 0 rgba(255,255,255,.7); }
+.dark  { background: var(--dark-key); color: var(--dark-legend); box-shadow: 0 3px 0 var(--dark-key-shade), inset 0 1px 0 rgba(255,255,255,.08); }
+.key.pressed, .key:active:not(:disabled) { transform: translateY(2px); }
+.putty.pressed, .putty:active:not(:disabled) { box-shadow: 0 1px 0 var(--putty-shade), inset 0 1px 0 rgba(255,255,255,.7); }
+.dark.pressed, .dark:active:not(:disabled) { box-shadow: 0 1px 0 var(--dark-key-shade); }
+
+.pill { height: 40px; min-width: 64px; padding: 0 14px; border-radius: 20px; }
+.round { width: 52px; height: 52px; border-radius: 50%; }
+.power { background: var(--red); color: #fff; box-shadow: 0 3px 0 #8c2a22, inset 0 1px 0 rgba(255,255,255,.25); }
+.power.pressed, .power:active:not(:disabled) { box-shadow: 0 1px 0 #8c2a22; }
+
+/* D-pad: the memorable bit */
+.dpad {
+  position: relative; width: 236px; height: 236px; margin-left: auto; margin-right: auto;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #efe9de, var(--putty) 55%, #d4cdbf);
+  box-shadow: 0 4px 0 var(--putty-shade), 0 18px 28px -14px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.8);
+}
+.dpad .arrow {
+  position: absolute; width: 76px; height: 76px; border-radius: 22px; background: transparent; color: var(--ink);
+  box-shadow: none;
+}
+.dpad .arrow svg { width: 26px; height: 26px; }
+.dpad .arrow:hover { background: rgba(0,0,0,.04); }
+.dpad .arrow.pressed, .dpad .arrow:active:not(:disabled) { background: rgba(0,0,0,.08); transform: none; }
+.dpad .up    { top: 4px;  left: 80px; }
+.dpad .down  { bottom: 4px; left: 80px; }
+.dpad .left  { left: 4px;  top: 80px; }
+.dpad .right { right: 4px; top: 80px; }
+.dpad .ok {
+  position: absolute; top: 58px; left: 58px; width: 120px; height: 120px; border-radius: 50%;
+  font: 600 22px/1 var(--legend);
+  background: radial-gradient(circle at 50% 30%, #45444f, var(--dark-key) 60%);
+  color: var(--dark-legend);
+  box-shadow: 0 4px 0 var(--dark-key-shade), inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 6px rgba(0,0,0,.06);
+}
+.dpad .ok.pressed, .dpad .ok:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--dark-key-shade), 0 0 0 6px rgba(0,0,0,.06); }
+
+.rocker {
+  display: grid; grid-template-rows: 1fr auto 1fr; width: 62px; height: 132px;
+  border-radius: 31px; overflow: hidden;
+  background: var(--dark-key); box-shadow: 0 3px 0 var(--dark-key-shade), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.rocker .key { background: transparent; color: var(--dark-legend); box-shadow: none; border-radius: 0; }
+.rocker .key.pressed, .rocker .key:active:not(:disabled) { background: rgba(0,0,0,.25); transform: none; }
+.rocker .label { text-align: center; font: 500 13px/1 var(--legend); color: var(--muted); padding: 2px 0; }
+.center-stack { display: grid; gap: 12px; justify-items: center; }
+
+.colors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.colors .key { height: 22px; border-radius: 11px; }
+.c-red { background: var(--red); box-shadow: 0 3px 0 #7d2820; }
+.c-green { background: var(--green); box-shadow: 0 3px 0 #22573a; }
+.c-yellow { background: var(--yellow); box-shadow: 0 3px 0 #8a6a1f; }
+.c-blue { background: var(--blue); box-shadow: 0 3px 0 #23467a; }
+.colors .key.pressed, .colors .key:active:not(:disabled) { box-shadow: 0 1px 0 rgba(0,0,0,.4); }
+
+.media { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.media .key { height: 40px; border-radius: 20px; }
+
+.numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.numpad .key { height: 46px; border-radius: 14px; font: 600 20px/1 var(--legend); }
+.numpad .zero { grid-column: 2; }
+
+/* ------------------------------------------------------------ empty state */
+.empty {
+  max-width: 340px; margin: 18px auto 0; padding: 20px; border-radius: 20px;
+  background: var(--panel); border: 1px solid var(--line); text-align: center;
+}
+.empty h2 { margin: 0 0 6px; font-size: 20px; }
+.empty p { margin: 0 0 16px; color: var(--muted); }
+
+/* ------------------------------------------------------------ drawer */
+.scrim {
+  position: fixed; inset: 0; z-index: 20; background: rgba(8,7,14,.55);
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.scrim.open { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed; z-index: 21; top: 0; bottom: 0; left: 0; width: min(320px, 86vw);
+  background: var(--panel); border-right: 1px solid var(--line);
+  transform: translateX(-102%); transition: transform .22s cubic-bezier(.2,.8,.2,1);
+  display: flex; flex-direction: column;
+  padding: calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));
+}
+.drawer.open { transform: none; }
+.drawer header { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 12px 8px; }
+.drawer h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.drawer .section-title { color: var(--muted); font-size: 14px; padding: 12px 8px 6px; }
+.box-list { list-style: none; margin: 0; padding: 0; }
+.box-item { display: flex; align-items: center; gap: 4px; border-radius: 12px; }
+.box-item.current { background: color-mix(in srgb, var(--focus) 14%, transparent); }
+.box-item .select {
+  flex: 1; min-width: 0; text-align: left; border: 0; background: transparent; border-radius: 12px; padding: 10px 8px;
+}
+.box-item .select:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.box-item .bn { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.box-item .bm { display: block; color: var(--muted); font-size: 13px; }
+.menu-btn {
+  display: flex; align-items: center; gap: 12px; width: 100%; border: 0; background: transparent;
+  padding: 12px 8px; border-radius: 12px; text-align: left; font-weight: 500;
+}
+.menu-btn:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.menu-btn svg { width: 22px; height: 22px; flex: none; }
+.drawer .spacer { flex: 1; }
+.drawer .foot { color: var(--muted); font-size: 13px; padding: 8px; }
+
+/* ------------------------------------------------------------ dialogs */
+dialog {
+  width: min(440px, calc(100vw - 24px)); max-height: calc(100vh - 32px);
+  border: 1px solid var(--line); border-radius: 20px; padding: 0;
+  background: var(--panel); color: var(--text);
+}
+dialog::backdrop { background: rgba(8,7,14,.6); }
+.dlg { padding: 18px 18px 20px; }
+.dlg header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.dlg h2 { margin: 0; font-size: 20px; font-weight: 600; }
+.dlg h3 { margin: 18px 0 8px; font-size: 15px; font-weight: 600; }
+.dlg p { margin: 0 0 10px; color: var(--muted); }
+.field { display: grid; gap: 6px; margin: 12px 0; }
+.field label { font-size: 14px; font-weight: 500; }
+.field .hint { font-size: 13px; color: var(--muted); }
+input[type=text], input[type=password], input[type=number], input[inputmode] {
+  width: 100%; height: 44px; padding: 0 12px; border-radius: 12px;
+  border: 1px solid var(--line); background: color-mix(in srgb, var(--night) 40%, var(--panel));
+}
+input.code { font: 600 26px/1 var(--legend); letter-spacing: .3em; text-align: center; height: 56px; }
+.inline { display: flex; gap: 8px; }
+.inline input { flex: 1; min-width: 0; }
+.btn {
+  height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--line);
+  background: transparent; font-weight: 600; white-space: nowrap;
+}
+.btn:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.btn.primary { background: var(--putty); color: var(--ink); border-color: var(--putty); }
+.btn.primary:hover { filter: brightness(1.05); }
+.btn.danger { color: #ff8b7e; border-color: color-mix(in srgb, #ff8b7e 40%, var(--line)); }
+.btn.danger.armed { background: var(--red); color: #fff; border-color: var(--red); }
+.btn:disabled { opacity: .5; cursor: progress; }
+.actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; }
+.actions .left { margin-right: auto; }
+.msg { font-size: 14px; margin: 8px 0 0; min-height: 1.2em; }
+.msg.error { color: #ff8b7e; }
+.msg.good { color: var(--ok); }
+.found { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.found li {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px;
+}
+.found .info { flex: 1; min-width: 0; }
+.found .fn { font-weight: 600; display: block; }
+.found .fm { font-size: 13px; color: var(--muted); display: block; }
+.spinner {
+  width: 16px; height: 16px; border-radius: 50%; display: inline-block; vertical-align: -3px; margin-right: 6px;
+  border: 2px solid var(--line); border-top-color: var(--text); animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.shortcuts { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; }
+.shortcuts dt { font: 600 14px/1.6 var(--legend); }
+.shortcuts dd { margin: 0; color: var(--muted); }
+kbd { font: 600 13px var(--legend); padding: 1px 6px; border-radius: 6px; border: 1px solid var(--line); }
+
+/* ------------------------------------------------------------ toast */
+.toast {
+  position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 40;
+  transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  max-width: calc(100vw - 32px); padding: 10px 14px; border-radius: 12px;
+  background: #2f2d3f; color: #fff; border: 1px solid #45425a; font-size: 14px;
+  transition: opacity .18s, transform .18s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.error { background: #4a1f1c; border-color: #7a312b; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0s !important; animation-duration: 0s !important; }
+}
+@media (min-width: 720px) {
+  main { padding-top: 12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="icon-btn" id="menuBtn" aria-label="Open menu" aria-controls="drawer" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <button class="box-picker" id="boxPicker" aria-label="Choose box">
+    <span style="min-width:0">
+      <span class="name" id="boxName">MAG Remote</span>
+      <span class="sub" id="boxSub"></span>
+    </span>
+  </button>
+</div>
+
+<main>
+  <div class="empty" id="empty" hidden>
+    <h2>Add your first box</h2>
+    <p>Scan your network or enter the box's IP address. Turn on the remote option first: Settings › System settings › Remote control.</p>
+    <button class="btn primary" data-open-add>Add a box</button>
+  </div>
+
+  <div class="handset" id="handset" aria-label="Remote control">
+    <span class="led" id="led" aria-hidden="true"></span>
+
+    <div class="row">
+      <button class="key dark round" data-key="mute" aria-label="Mute">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
+      </button>
+      <button class="key dark pill" data-key="info">Info</button>
+      <button class="key dark pill" data-key="menu">Menu</button>
+      <button class="key power round" data-key="power" aria-label="Power">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 7.2a8 8 0 1 0 11.4 0"/></svg>
+      </button>
+    </div>
+
+    <div class="dpad" role="group" aria-label="Navigation">
+      <button class="key arrow up" data-key="up" data-repeat aria-label="Up"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 6 5 15h14z"/></svg></button>
+      <button class="key arrow left" data-key="left" data-repeat aria-label="Left"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 12l9-7v14z"/></svg></button>
+      <button class="key ok" data-key="ok">OK</button>
+      <button class="key arrow right" data-key="right" data-repeat aria-label="Right"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 12 9 5v14z"/></svg></button>
+      <button class="key arrow down" data-key="down" data-repeat aria-label="Down"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 18 5 9h14z"/></svg></button>
+    </div>
+
+    <div class="row">
+      <button class="key dark pill" data-key="back" aria-label="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+      </button>
+      <button class="key dark pill" data-key="home" aria-label="Home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg>
+      </button>
+    </div>
+
+    <div class="row">
+      <div class="rocker" role="group" aria-label="Volume">
+        <button class="key" data-key="vol+" data-repeat aria-label="Volume up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
+        <span class="label">Vol</span>
+        <button class="key" data-key="vol-" data-repeat aria-label="Volume down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
+      </div>
+      <div class="center-stack">
+        <button class="key dark round" data-key="play" aria-label="Play or pause">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5v14l8-7zM14 5h3v14h-3zM19 5h2v14h-2z"/></svg>
+        </button>
+        <div class="row" style="gap:10px">
+          <button class="key dark round" style="width:44px;height:44px" data-key="prev" aria-label="Previous or rewind">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 6v12L3 12zM20 6v12l-8-6z"/></svg>
+          </button>
+          <button class="key dark round" style="width:44px;height:44px" data-key="next" aria-label="Next or fast forward">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 6v12l8-6zM4 6v12l8-6z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="rocker" role="group" aria-label="Channel">
+        <button class="key" data-key="ch+" data-repeat aria-label="Channel up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg></button>
+        <span class="label">Ch</span>
+        <button class="key" data-key="ch-" data-repeat aria-label="Channel down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+    </div>
+
+    <div class="colors" role="group" aria-label="Color keys">
+      <button class="key c-red" data-key="f1" aria-label="Red (F1)"></button>
+      <button class="key c-green" data-key="f2" aria-label="Green (F2)"></button>
+      <button class="key c-yellow" data-key="f3" aria-label="Yellow (F3)"></button>
+      <button class="key c-blue" data-key="f4" aria-label="Blue (F4)"></button>
+    </div>
+
+    <div class="row" id="extraRow" hidden>
+      <div class="media" style="width:100%">
+        <button class="key dark" data-key="stop">Stop</button>
+        <button class="key dark" data-key="epg">Guide</button>
+        <button class="key dark" data-key="tv">TV</button>
+      </div>
+    </div>
+
+    <div class="row" style="display:block">
+      <div class="numpad" role="group" aria-label="Number keys">
+        <button class="key putty" data-key="1">1</button>
+        <button class="key putty" data-key="2">2</button>
+        <button class="key putty" data-key="3">3</button>
+        <button class="key putty" data-key="4">4</button>
+        <button class="key putty" data-key="5">5</button>
+        <button class="key putty" data-key="6">6</button>
+        <button class="key putty" data-key="7">7</button>
+        <button class="key putty" data-key="8">8</button>
+        <button class="key putty" data-key="9">9</button>
+        <button class="key putty zero" data-key="0">0</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- hamburger drawer -->
+<div class="scrim" id="scrim"></div>
+<nav class="drawer" id="drawer" aria-label="Menu" aria-hidden="true">
+  <header>
+    <h2>MAG Remote</h2>
+    <button class="icon-btn" id="closeDrawer" aria-label="Close menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+  </header>
+  <div class="section-title">Your boxes</div>
+  <ul class="box-list" id="boxList"></ul>
+  <button class="menu-btn" data-open-add>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    Add a box
+  </button>
+  <button class="menu-btn" id="themeBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/></svg>
+    <span id="themeLabel">Theme: automatic</span>
+  </button>
+  <button class="menu-btn" id="shortcutsBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
+    Keyboard shortcuts
+  </button>
+  <div class="spacer"></div>
+  <div class="foot" id="version"></div>
+</nav>
+
+<!-- add box -->
+<dialog id="addDlg" aria-labelledby="addTitle">
+  <div class="dlg">
+    <header>
+      <h2 id="addTitle">Add a box</h2>
+      <button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </header>
+
+    <section id="addFind">
+      <p>Turn on the remote option on the box first: Settings › System settings › Remote control.</p>
+      <h3>Find boxes on your network</h3>
+      <button class="btn primary" id="scanBtn">Scan network</button>
+      <div class="msg" id="scanMsg" role="status"></div>
+      <ul class="found" id="foundList"></ul>
+
+      <h3>Or enter its address</h3>
+      <form class="inline" id="manualForm">
+        <input type="text" id="manualHost" placeholder="192.168.1.50" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Box IP address" required>
+        <button class="btn" type="submit">Find</button>
+      </form>
+      <div class="msg" id="manualMsg" role="status"></div>
+      <form class="inline" id="manualPortForm" hidden>
+        <input type="number" id="manualPort" placeholder="Port" min="1" max="65535" aria-label="Port">
+        <button class="btn" type="submit">Use pairing</button>
+      </form>
+    </section>
+
+    <section id="addSetup" hidden>
+      <p id="setupWhat"></p>
+      <div class="field">
+        <label for="setupName">Name</label>
+        <input type="text" id="setupName" maxlength="60" placeholder="Living room">
+      </div>
+
+      <div id="legacySetup" hidden>
+        <div class="field">
+          <label for="setupPassword">Remote control password</label>
+          <input type="password" id="setupPassword" inputmode="numeric" autocomplete="off">
+          <span class="hint">The number you set on the box under Settings › System settings › Remote control.</span>
+        </div>
+      </div>
+
+      <div id="pairSetup" hidden>
+        <div id="pairStep1">
+          <p>This box pairs with a code. Make sure the TV is on, then show the code.</p>
+        </div>
+        <div id="pairStep2" hidden>
+          <div class="field">
+            <label for="pairCode">Code shown on the TV</label>
+            <input type="text" id="pairCode" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="12">
+          </div>
+        </div>
+      </div>
+
+      <div class="msg" id="setupMsg" role="status"></div>
+      <div class="actions">
+        <button class="btn left" id="setupBack">Back</button>
+        <button class="btn primary" id="setupGo">Add box</button>
+      </div>
+    </section>
+  </div>
+</dialog>
+
+<!-- edit box -->
+<dialog id="editDlg" aria-labelledby="editTitle">
+  <form class="dlg" id="editForm" method="dialog">
+    <header>
+      <h2 id="editTitle">Box settings</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </header>
+    <p id="editWhat"></p>
+    <div class="field">
+      <label for="editName">Name</label>
+      <input type="text" id="editName" maxlength="60" required>
+    </div>
+    <div class="field" id="editPwField">
+      <label for="editPassword">Remote control password</label>
+      <input type="password" id="editPassword" inputmode="numeric" autocomplete="off" placeholder="Unchanged">
+    </div>
+    <div class="msg" id="editMsg" role="status"></div>
+    <div class="actions">
+      <button class="btn danger left" type="button" id="removeBtn">Remove</button>
+      <button class="btn" type="button" id="testBtn">Test connection</button>
+      <button class="btn primary" type="submit" id="saveBtn">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- shortcuts -->
+<dialog id="keysDlg" aria-labelledby="keysTitle">
+  <div class="dlg">
+    <header>
+      <h2 id="keysTitle">Keyboard shortcuts</h2>
+      <button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </header>
+    <dl class="shortcuts">
+      <dt><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></dt><dd>Navigate</dd>
+      <dt><kbd>Enter</kbd></dt><dd>OK</dd>
+      <dt><kbd>Backspace</kbd> <kbd>Esc</kbd></dt><dd>Back</dd>
+      <dt><kbd>H</kbd></dt><dd>Home</dd>
+      <dt><kbd>+</kbd> <kbd>-</kbd></dt><dd>Volume</dd>
+      <dt><kbd>Page Up</kbd> <kbd>Page Down</kbd></dt><dd>Channel</dd>
+      <dt><kbd>M</kbd></dt><dd>Mute</dd>
+      <dt><kbd>I</kbd></dt><dd>Info</dd>
+      <dt><kbd>Space</kbd></dt><dd>Play or pause</dd>
+      <dt><kbd>0</kbd>–<kbd>9</kbd></dt><dd>Numbers</dd>
+      <dt><kbd>F1</kbd>–<kbd>F4</kbd></dt><dd>Color keys</dd>
+    </dl>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+
+let boxes = [];
+let current = null;
+
+async function api(method, path, body) {
+  const res = await fetch(path, {
+    method, headers: body ? { "Content-Type": "application/json" } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  let data = {};
+  try { data = await res.json(); } catch {}
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+// ---------------------------------------------------------------- toast
+let toastTimer;
+function toast(text, isError = false) {
+  const t = $("#toast");
+  t.textContent = text;
+  t.classList.toggle("error", isError);
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), isError ? 4500 : 1800);
+}
+
+// ---------------------------------------------------------------- boxes
+const protoLabel = b => b.protocol === "legacy" ? "password" : "pairing code";
+function describe(b) {
+  return `${b.model ? b.model + " at " : ""}${b.host}`;
+}
+
+async function loadBoxes() {
+  try {
+    const data = await api("GET", "/api/boxes");
+    boxes = data.boxes;
+    $("#version").textContent = `Version ${data.version}`;
+  } catch (e) {
+    toast(e.message, true);
+  }
+  const saved = store.get("mag.current");
+  select(boxes.find(b => b.id === saved) || boxes[0] || null);
+}
+
+function select(box) {
+  current = box;
+  if (box) store.set("mag.current", box.id);
+  $("#boxName").textContent = box ? box.name : "MAG Remote";
+  $("#boxSub").textContent = box ? describe(box) : "No box added";
+  $("#empty").hidden = !!box;
+  $("#handset").setAttribute("aria-disabled", box ? "false" : "true");
+  const keys = new Set(box ? box.keys : []);
+  $$("#handset [data-key]").forEach(k => { k.disabled = !!box && !keys.has(k.dataset.key); });
+  $("#extraRow").hidden = !box || !["stop", "epg", "tv"].some(k => keys.has(k));
+  renderBoxList();
+}
+
+function renderBoxList() {
+  const ul = $("#boxList");
+  ul.innerHTML = "";
+  if (!boxes.length) {
+    const li = document.createElement("li");
+    li.className = "foot";
+    li.textContent = "No boxes yet.";
+    ul.append(li);
+    return;
+  }
+  for (const b of boxes) {
+    const li = document.createElement("li");
+    li.className = "box-item" + (current && b.id === current.id ? " current" : "");
+    const sel = document.createElement("button");
+    sel.className = "select";
+    sel.innerHTML = `<span class="bn"></span><span class="bm"></span>`;
+    sel.querySelector(".bn").textContent = b.name;
+    sel.querySelector(".bm").textContent = describe(b);
+    sel.onclick = () => { select(b); closeDrawer(); };
+    if (current && b.id === current.id) sel.setAttribute("aria-current", "true");
+    const gear = document.createElement("button");
+    gear.className = "icon-btn";
+    gear.setAttribute("aria-label", `Settings for ${b.name}`);
+    gear.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`;
+    gear.onclick = () => openEdit(b);
+    li.append(sel, gear);
+    ul.append(li);
+  }
+}
+
+// ---------------------------------------------------------------- sending
+const queue = [];
+let sending = false;
+const LABELS = { "vol+": "Volume up", "vol-": "Volume down", "ch+": "Channel up", "ch-": "Channel down",
+  f1: "Red", f2: "Green", f3: "Yellow", f4: "Blue", ok: "OK", prev: "Previous", next: "Next", play: "Play/pause", epg: "Guide", tv: "TV" };
+
+function flash(ok = true) {
+  const led = $("#led");
+  led.classList.remove("err");
+  led.classList.add(ok ? "on" : "err");
+  setTimeout(() => led.classList.remove("on", "err"), ok ? 120 : 900);
+}
+
+function press(key) {
+  if (!current) return;
+  if (navigator.vibrate) navigator.vibrate(8);
+  flash(true);
+  if (queue.length < 10) queue.push({ box: current, key });
+  pump();
+}
+
+async function pump() {
+  if (sending) return;
+  sending = true;
+  while (queue.length) {
+    // batch consecutive presses for the same box into one request
+    const box = queue[0].box;
+    const keys = [];
+    while (queue.length && queue[0].box === box && keys.length < 10) keys.push(queue.shift().key);
+    try {
+      await api("POST", `/api/boxes/${box.id}/keys`, { keys });
+    } catch (e) {
+      flash(false);
+      toast(e.message, true);
+      queue.length = 0;
+    }
+  }
+  sending = false;
+}
+
+// hold-to-repeat for arrows, volume, channel
+function bindKeys() {
+  $$("#handset [data-key]").forEach(btn => {
+    let timer, repeatTimer;
+    const stop = () => { clearTimeout(timer); clearInterval(repeatTimer); btn.classList.remove("pressed"); };
+    btn.addEventListener("pointerdown", e => {
+      if (btn.disabled || e.button !== 0) return;
+      e.preventDefault();
+      btn.setPointerCapture?.(e.pointerId);
+      btn.classList.add("pressed");
+      press(btn.dataset.key);
+      if (btn.hasAttribute("data-repeat")) {
+        timer = setTimeout(() => { repeatTimer = setInterval(() => press(btn.dataset.key), 160); }, 450);
+      }
+    });
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(ev => btn.addEventListener(ev, stop));
+    // keyboard activation of a focused button
+    btn.addEventListener("click", e => { if (e.detail === 0) press(btn.dataset.key); });
+  });
+}
+
+const KEYMAP = {
+  ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", Enter: "ok",
+  Backspace: "back", Escape: "back", h: "home", H: "home", "+": "vol+", "=": "vol+", "-": "vol-",
+  PageUp: "ch+", PageDown: "ch-", m: "mute", M: "mute", i: "info", I: "info", " ": "play",
+  F1: "f1", F2: "f2", F3: "f3", F4: "f4",
+};
+document.addEventListener("keydown", e => {
+  if (document.querySelector("dialog[open]") || $("#drawer").classList.contains("open")) return;
+  if (e.target.matches("input, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target.matches("button") && (e.key === "Enter" || e.key === " ")) return; // native activation
+  const key = /^[0-9]$/.test(e.key) ? e.key : KEYMAP[e.key];
+  if (!key || !current || !current.keys.includes(key)) return;
+  e.preventDefault();
+  const btn = $(`#handset [data-key="${CSS.escape(key)}"]`);
+  if (btn) { btn.classList.add("pressed"); setTimeout(() => btn.classList.remove("pressed"), 110); }
+  press(key);
+});
+
+// ---------------------------------------------------------------- drawer
+function openDrawer() {
+  $("#drawer").classList.add("open"); $("#scrim").classList.add("open");
+  $("#drawer").setAttribute("aria-hidden", "false");
+  $("#menuBtn").setAttribute("aria-expanded", "true");
+  $("#closeDrawer").focus();
+}
+function closeDrawer() {
+  $("#drawer").classList.remove("open"); $("#scrim").classList.remove("open");
+  $("#drawer").setAttribute("aria-hidden", "true");
+  $("#menuBtn").setAttribute("aria-expanded", "false");
+}
+$("#menuBtn").onclick = openDrawer;
+$("#boxPicker").onclick = openDrawer;
+$("#closeDrawer").onclick = closeDrawer;
+$("#scrim").onclick = closeDrawer;
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#drawer").classList.contains("open")) closeDrawer(); });
+
+$$("dialog [data-close]").forEach(b => b.onclick = () => b.closest("dialog").close());
+$$("dialog").forEach(d => d.addEventListener("click", e => { if (e.target === d) d.close(); }));
+
+// theme
+const THEMES = ["auto", "dark", "light"];
+function applyTheme(t) {
+  if (t === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", t);
+  $("#themeLabel").textContent = `Theme: ${t === "auto" ? "automatic" : t}`;
+}
+let theme = store.get("mag.theme") || "auto";
+applyTheme(theme);
+$("#themeBtn").onclick = () => {
+  theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+  store.set("mag.theme", theme); applyTheme(theme);
+};
+$("#shortcutsBtn").onclick = () => { closeDrawer(); $("#keysDlg").showModal(); };
+
+// ---------------------------------------------------------------- add box
+let draft = null, pairToken = null;
+
+function setMsg(el, text, kind = "") {
+  el.className = "msg" + (kind ? " " + kind : "");
+  el.innerHTML = "";
+  if (kind === "busy") { const s = document.createElement("span"); s.className = "spinner"; el.append(s); }
+  el.append(document.createTextNode(text));
+}
+
+function openAdd() {
+  closeDrawer();
+  showFind();
+  $("#foundList").innerHTML = "";
+  setMsg($("#scanMsg"), ""); setMsg($("#manualMsg"), "");
+  $("#manualPortForm").hidden = true;
+  $("#addDlg").showModal();
+}
+$$("[data-open-add]").forEach(b => b.onclick = openAdd);
+
+function showFind() { $("#addFind").hidden = false; $("#addSetup").hidden = true; }
+
+$("#addDlg").addEventListener("close", cancelPairing);
+async function cancelPairing() {
+  if (pairToken) { const t = pairToken; pairToken = null; try { await api("POST", "/api/pair/cancel", { token: t }); } catch {} }
+}
+
+async function runDiscover(host) {
+  return (await api("POST", "/api/discover", host ? { host } : {})).found;
+}
+
+$("#scanBtn").onclick = async () => {
+  const btn = $("#scanBtn");
+  btn.disabled = true;
+  setMsg($("#scanMsg"), "Scanning your network…", "busy");
+  $("#foundList").innerHTML = "";
+  try {
+    const found = await runDiscover();
+    setMsg($("#scanMsg"), found.length ? `Found ${found.length} ${found.length === 1 ? "box" : "boxes"}.`
+      : "No boxes answered. Check the remote option is on, or enter the IP address below.");
+    renderFound(found);
+  } catch (e) {
+    setMsg($("#scanMsg"), e.message, "error");
+  } finally { btn.disabled = false; }
+};
+
+function renderFound(found) {
+  const ul = $("#foundList");
+  ul.innerHTML = "";
+  for (const f of found) {
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="info"><span class="fn"></span><span class="fm"></span></span>`;
+    li.querySelector(".fn").textContent = f.name;
+    li.querySelector(".fm").textContent = `${describe(f)}, uses a ${protoLabel(f)}`;
+    const b = document.createElement("button");
+    b.className = "btn";
+    b.textContent = f.added ? "Added" : "Add";
+    b.disabled = f.added;
+    b.onclick = () => showSetup(f);
+    li.append(b);
+    ul.append(li);
+  }
+}
+
+$("#manualForm").onsubmit = async e => {
+  e.preventDefault();
+  const host = $("#manualHost").value.trim();
+  $("#manualPortForm").hidden = true;
+  setMsg($("#manualMsg"), `Looking for a box at ${host}…`, "busy");
+  try {
+    const found = await runDiscover(host);
+    const hit = found.find(f => f.host === host);
+    if (hit) { setMsg($("#manualMsg"), ""); showSetup(hit); return; }
+    setMsg($("#manualMsg"), "No box answered at that address. If it pairs with a code, enter its remote port:", "error");
+    $("#manualPortForm").hidden = false;
+    $("#manualPort").focus();
+  } catch (err) { setMsg($("#manualMsg"), err.message, "error"); }
+};
+$("#manualPortForm").onsubmit = e => {
+  e.preventDefault();
+  const port = parseInt($("#manualPort").value, 10);
+  if (!port) return;
+  showSetup({ host: $("#manualHost").value.trim(), port, name: "", model: "", serial: "", protocol: "pairing" });
+};
+
+function showSetup(f) {
+  draft = { ...f };
+  $("#addFind").hidden = true; $("#addSetup").hidden = false;
+  $("#setupWhat").textContent = `${f.name && f.name !== f.host ? f.name + ", " : ""}${describe(f)}`;
+  $("#setupName").value = f.name && f.name !== f.host ? f.name : "";
+  const legacy = f.protocol === "legacy";
+  $("#legacySetup").hidden = !legacy; $("#pairSetup").hidden = legacy;
+  $("#pairStep1").hidden = false; $("#pairStep2").hidden = true;
+  $("#setupPassword").value = ""; $("#pairCode").value = "";
+  $("#setupGo").textContent = legacy ? "Add box" : "Show code on TV";
+  setMsg($("#setupMsg"), "");
+  (legacy ? $("#setupPassword") : $("#setupName")).focus();
+}
+$("#setupBack").onclick = async () => { await cancelPairing(); showFind(); };
+
+$("#setupGo").onclick = async () => {
+  const btn = $("#setupGo");
+  const name = $("#setupName").value.trim() || draft.name || draft.host;
+  const base = { host: draft.host, port: draft.port, name, model: draft.model, serial: draft.serial };
+  btn.disabled = true;
+  try {
+    let box;
+    if (draft.protocol === "legacy") {
+      setMsg($("#setupMsg"), "Checking the password…", "busy");
+      box = (await api("POST", "/api/boxes", { ...base, password: $("#setupPassword").value })).box;
+    } else if (!pairToken) {
+      setMsg($("#setupMsg"), "Asking the box for a code…", "busy");
+      pairToken = (await api("POST", "/api/pair/start", base)).token;
+      $("#pairStep1").hidden = true; $("#pairStep2").hidden = false;
+      btn.textContent = "Pair";
+      setMsg($("#setupMsg"), "");
+      $("#pairCode").focus();
+      return;
+    } else {
+      setMsg($("#setupMsg"), "Pairing…", "busy");
+      box = (await api("POST", "/api/pair/finish", { token: pairToken, code: $("#pairCode").value })).box;
+      pairToken = null;
+    }
+    $("#addDlg").close();
+    await loadBoxes();
+    select(boxes.find(b => b.id === box.id) || box);
+    toast(`Added ${box.name}`);
+  } catch (e) {
+    setMsg($("#setupMsg"), e.message, "error");
+    if (/expired/i.test(e.message)) { pairToken = null; showSetup(draft); setMsg($("#setupMsg"), e.message, "error"); }
+  } finally { btn.disabled = false; }
+};
+$("#setupPassword").addEventListener("keydown", e => { if (e.key === "Enter") $("#setupGo").click(); });
+$("#pairCode").addEventListener("keydown", e => { if (e.key === "Enter") $("#setupGo").click(); });
+
+// ---------------------------------------------------------------- edit box
+let editing = null;
+function openEdit(b) {
+  closeDrawer();
+  editing = b;
+  $("#editWhat").textContent = `${describe(b)}, uses a ${protoLabel(b)}`;
+  $("#editName").value = b.name;
+  $("#editPassword").value = "";
+  $("#editPwField").hidden = b.protocol !== "legacy";
+  $("#removeBtn").classList.remove("armed"); $("#removeBtn").textContent = "Remove";
+  setMsg($("#editMsg"), "");
+  $("#editDlg").showModal();
+}
+$("#editForm").onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const body = { name: $("#editName").value.trim() };
+    if ($("#editPassword").value) body.password = $("#editPassword").value;
+    await api("PATCH", `/api/boxes/${editing.id}`, body);
+    $("#editDlg").close();
+    await loadBoxes();
+    toast("Saved");
+  } catch (err) { setMsg($("#editMsg"), err.message, "error"); }
+};
+$("#testBtn").onclick = async () => {
+  setMsg($("#editMsg"), "Testing…", "busy");
+  try {
+    const r = await api("POST", `/api/boxes/${editing.id}/test`);
+    setMsg($("#editMsg"), `Connected (${r.ms} ms).`, "good");
+  } catch (e) { setMsg($("#editMsg"), e.message, "error"); }
+};
+$("#removeBtn").onclick = async () => {
+  const btn = $("#removeBtn");
+  if (!btn.classList.contains("armed")) {
+    btn.classList.add("armed"); btn.textContent = "Tap again to remove";
+    setTimeout(() => { btn.classList.remove("armed"); btn.textContent = "Remove"; }, 3000);
+    return;
+  }
+  try {
+    await api("DELETE", `/api/boxes/${editing.id}`);
+    $("#editDlg").close();
+    if (current && current.id === editing.id) store.set("mag.current", "");
+    await loadBoxes();
+    toast(`Removed ${editing.name}`);
+  } catch (e) { setMsg($("#editMsg"), e.message, "error"); }
+};
+
+bindKeys();
+loadBoxes();
+</script>
+</body>
+</html>
