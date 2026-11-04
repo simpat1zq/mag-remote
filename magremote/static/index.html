@@ -304,38 +304,38 @@ kbd { font: 600 13px var(--legend); padding: 1px 6px; border-radius: 6px; border
 }
 
 /* ------------------------------------------------------------ compact layout */
-/* Goal: the whole remote on one phone screen. The D-pad tucks up between
-   back/home, and the rockers tuck up beside its lower half. */
-:root[data-layout="compact"] .topbar { padding-top: calc(2px + env(safe-area-inset-top)); padding-bottom: 0; }
+/* Whole remote on one screen. --t (0..1) is set by fitCompact() from the
+   screen height: 0 = tightest (D-pad tucked between back/home, rockers beside
+   the circle), 1 = roomiest (nothing overlaps). Everything blends between. */
+:root[data-layout="compact"] { --t: 0; }
+:root[data-layout="compact"] .topbar { padding-top: calc(calc(2px + 6px * var(--t)) + env(safe-area-inset-top)); padding-bottom: 0; }
 :root[data-layout="compact"] main { padding-top: 0; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
-:root[data-layout="compact"] .handset { margin-top: 0; padding: 12px 22px 18px; border-radius: 36px 36px 46px 46px; }
-:root[data-layout="compact"] .led { top: 4px; }
-:root[data-layout="compact"] #topRow .round { width: 44px; height: 44px; }
+:root[data-layout="compact"] .handset { margin-top: 0; padding: calc(12px + 8px * var(--t)) 22px calc(18px + 12px * var(--t)); border-radius: 36px 36px 46px 46px; }
+:root[data-layout="compact"] .led { top: calc(4px + 6px * var(--t)); }
+:root[data-layout="compact"] #topRow .round { width: calc(44px + 8px * var(--t)); height: calc(44px + 8px * var(--t)); }
 :root[data-layout="compact"] #topRow .round svg { width: 20px; height: 20px; }
 /* back/home right under mute/power, same width so the columns line up */
-:root[data-layout="compact"] #navRow { margin-top: 8px; }
-:root[data-layout="compact"] #navRow .key { width: 44px; height: 40px; min-width: 0; padding: 0; border-radius: 20px; }
-:root[data-layout="compact"] .dpad { --d: 188px; --a: 60px; --o: 92px; margin-top: -44px; }
-:root[data-layout="compact"] .dpad .ok { font-size: 19px; }
+:root[data-layout="compact"] #navRow { margin-top: calc(8px + 4px * var(--t)); }
+:root[data-layout="compact"] #navRow .key { width: calc(44px + 8px * var(--t)); height: 40px; min-width: 0; padding: 0; border-radius: 20px; }
+:root[data-layout="compact"] .dpad { --d: calc(188px + 16px * var(--t)); --a: calc(60px + 6px * var(--t)); --o: calc(92px + 10px * var(--t)); margin-top: calc(-44px + 62px * var(--t)); }
+:root[data-layout="compact"] .dpad .ok { font-size: calc(19px + 1px * var(--t)); }
 /* rockers rise beside the bottom of the circle; color keys sit just under it */
-:root[data-layout="compact"] #rockRow { margin-top: -44px; align-items: flex-end; }
-:root[data-layout="compact"] .rocker { height: 128px; }
-:root[data-layout="compact"] #rockRow .colors {
-  grid-template-columns: repeat(2, 48px); gap: 10px; align-self: end;
-}
-:root[data-layout="compact"] #rockRow .colors .key { height: 34px; border-radius: 12px; }
+:root[data-layout="compact"] #rockRow { margin-top: calc(-44px + 62px * var(--t)); align-items: flex-end; }
+:root[data-layout="compact"] .rocker { height: calc(128px + 4px * var(--t)); }
+:root[data-layout="compact"] #rockRow .colors { grid-template-columns: repeat(2, calc(48px + 4px * var(--t))); gap: calc(10px + 2px * var(--t)); align-self: end; }
+:root[data-layout="compact"] #rockRow .colors .key { height: calc(34px + 6px * var(--t)); border-radius: 12px; }
 :root[data-layout="compact"] #extraRow,
-:root[data-layout="compact"] #numRow { margin-top: 12px; }
-:root[data-layout="compact"] .numpad { gap: 8px 10px; }
-:root[data-layout="compact"] .numpad .key { height: 38px; font-size: 18px; border-radius: 12px; }
-/* narrow phones (≤360px): keep the circle clear of back/home and the rockers */
+:root[data-layout="compact"] #numRow { margin-top: calc(12px + 6px * var(--t)); }
+:root[data-layout="compact"] .numpad { gap: calc(8px + 4px * var(--t)) calc(10px + 2px * var(--t)); }
+:root[data-layout="compact"] .numpad .key { height: calc(38px + 8px * var(--t)); font-size: calc(18px + 2px * var(--t)); border-radius: 12px; }
+/* narrow phones (<=360px): smaller circle so it stays clear of back/home and the rockers */
 @media (max-width: 360px) {
   :root[data-layout="compact"] .handset { padding-left: 16px; padding-right: 16px; }
-  :root[data-layout="compact"] .dpad { --d: 164px; --a: 52px; --o: 80px; margin-top: -40px; }
-  :root[data-layout="compact"] .dpad .ok { font-size: 17px; }
+  :root[data-layout="compact"] .dpad { --d: calc(164px + 32px * var(--t)); --a: calc(52px + 10px * var(--t)); --o: calc(80px + 18px * var(--t)); margin-top: calc(-40px + 58px * var(--t)); }
+  :root[data-layout="compact"] .dpad .ok { font-size: calc(17px + 3px * var(--t)); }
   :root[data-layout="compact"] .rocker { width: 54px; }
-  :root[data-layout="compact"] #rockRow { margin-top: -28px; }
-  :root[data-layout="compact"] #rockRow .colors { grid-template-columns: repeat(2, 44px); }
+  :root[data-layout="compact"] #rockRow { margin-top: calc(-28px + 46px * var(--t)); }
+  :root[data-layout="compact"] #rockRow .colors { grid-template-columns: repeat(2, calc(44px + 6px * var(--t))); }
 }
 </style>
 </head>
@@ -659,6 +659,7 @@ function select(box) {
   const keys = new Set(box ? box.keys : []);
   $$("#handset [data-key]").forEach(k => { k.disabled = !!box && !keys.has(k.dataset.key); });
   $("#extraRow").hidden = !box || !["stop", "epg", "tv"].some(k => keys.has(k));
+  refit();
   renderBoxList();
 }
 
@@ -821,9 +822,31 @@ function applyLayout(mode) {
     rock.after(colors);
     play.hidden = false;
   }
+  refit();
   $("#layoutLabel").textContent = `Compact layout: ${compact ? "on" : "off"}`;
   $("#layoutBtn").setAttribute("aria-pressed", String(compact));
 }
+// compact: scale spacing to the screen height (see --t in the CSS)
+function fitCompact() {
+  const root = document.documentElement;
+  if (root.dataset.layout !== "compact") { root.style.removeProperty("--t"); return; }
+  const need = t => {
+    root.style.setProperty("--t", t);
+    const hs = $("#handset").getBoundingClientRect();
+    const pad = parseFloat(getComputedStyle($("main")).paddingBottom) || 0;
+    return hs.bottom + window.scrollY + pad;
+  };
+  const h0 = need(0), h1 = need(1);
+  const avail = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  const t = h1 > h0 ? Math.min(1, Math.max(0, (avail - h0) / (h1 - h0))) : 0;
+  root.style.setProperty("--t", t.toFixed(3));
+}
+var fitTimer;
+function refit() { cancelAnimationFrame(fitTimer); fitTimer = requestAnimationFrame(fitCompact); }
+window.addEventListener("resize", refit);
+window.visualViewport?.addEventListener("resize", refit);
+document.fonts?.ready.then(refit);
+
 let layout = store.get("mag.layout") === "compact" ? "compact" : "standard";
 applyLayout(layout);
 $("#layoutBtn").onclick = () => {
