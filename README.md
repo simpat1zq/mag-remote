@@ -11,6 +11,8 @@ control them from the browser — or from Home Assistant through its small HTTP 
   shown on the TV
 - Phone-first layout with a full remote: D-pad, volume, channels, numbers,
   color keys, playback; hold to repeat; keyboard shortcuts on desktop
+- Compact layout (menu › Compact layout) that fits the whole remote on one
+  phone screen
 - Installs to your home screen (PWA), works offline on your LAN, no cloud,
   no telemetry; nothing is configured in the image — everything is set up in the UI
 

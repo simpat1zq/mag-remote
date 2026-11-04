@@ -136,24 +136,26 @@ main { padding: 4px 16px calc(32px + env(safe-area-inset-bottom)); }
 
 /* D-pad: the memorable bit */
 .dpad {
-  position: relative; width: 236px; height: 236px; margin-left: auto; margin-right: auto;
+  --d: 236px; --a: 76px; --o: 120px;   /* ring, arrow pad, OK size */
+  position: relative; width: var(--d); height: var(--d); margin-left: auto; margin-right: auto;
   border-radius: 50%;
   background: radial-gradient(circle at 50% 35%, #efe9de, var(--putty) 55%, #d4cdbf);
   box-shadow: 0 4px 0 var(--putty-shade), 0 18px 28px -14px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.8);
 }
 .dpad .arrow {
-  position: absolute; width: 76px; height: 76px; border-radius: 22px; background: transparent; color: var(--ink);
+  position: absolute; width: var(--a); height: var(--a); border-radius: 22px; background: transparent; color: var(--ink);
   box-shadow: none;
 }
 .dpad .arrow svg { width: 26px; height: 26px; }
 .dpad .arrow:hover { background: rgba(0,0,0,.04); }
 .dpad .arrow.pressed, .dpad .arrow:active:not(:disabled) { background: rgba(0,0,0,.08); transform: none; }
-.dpad .up    { top: 4px;  left: 80px; }
-.dpad .down  { bottom: 4px; left: 80px; }
-.dpad .left  { left: 4px;  top: 80px; }
-.dpad .right { right: 4px; top: 80px; }
+.dpad .up    { top: 4px;    left: calc((var(--d) - var(--a)) / 2); }
+.dpad .down  { bottom: 4px; left: calc((var(--d) - var(--a)) / 2); }
+.dpad .left  { left: 4px;   top: calc((var(--d) - var(--a)) / 2); }
+.dpad .right { right: 4px;  top: calc((var(--d) - var(--a)) / 2); }
 .dpad .ok {
-  position: absolute; top: 58px; left: 58px; width: 120px; height: 120px; border-radius: 50%;
+  position: absolute; top: calc((var(--d) - var(--o)) / 2); left: calc((var(--d) - var(--o)) / 2);
+  width: var(--o); height: var(--o); border-radius: 50%;
   font: 600 22px/1 var(--legend);
   background: radial-gradient(circle at 50% 30%, #45444f, var(--dark-key) 60%);
   color: var(--dark-legend);
@@ -300,6 +302,21 @@ kbd { font: 600 13px var(--legend); padding: 1px 6px; border-radius: 6px; border
 @media (min-width: 720px) {
   main { padding-top: 12px; }
 }
+
+/* ------------------------------------------------------------ compact layout */
+:root[data-layout="compact"] .topbar { padding-bottom: 0; }
+:root[data-layout="compact"] main { padding-top: 0; }
+:root[data-layout="compact"] .handset { margin-top: 0; padding-top: 20px; }
+:root[data-layout="compact"] .dpad { --d: 204px; --a: 66px; --o: 102px; }
+:root[data-layout="compact"] .dpad .ok { font-size: 20px; }
+/* back/home sit right under mute/power, same width so the columns line up */
+:root[data-layout="compact"] #navRow { margin-top: 12px; }
+:root[data-layout="compact"] #navRow .key { width: 52px; min-width: 0; padding: 0; }
+/* color keys as a 2x2 block between the volume and channel rockers */
+:root[data-layout="compact"] #rockRow .colors {
+  grid-template-columns: repeat(2, 52px); gap: 12px; align-content: center;
+}
+:root[data-layout="compact"] #rockRow .colors .key { height: 40px; border-radius: 14px; }
 </style>
 </head>
 <body>
@@ -326,7 +343,7 @@ kbd { font: 600 13px var(--legend); padding: 1px 6px; border-radius: 6px; border
   <div class="handset" id="handset" aria-label="Remote control">
     <span class="led" id="led" aria-hidden="true"></span>
 
-    <div class="row">
+    <div class="row" id="topRow">
       <button class="key dark round" data-key="mute" aria-label="Mute">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
       </button>
@@ -337,7 +354,7 @@ kbd { font: 600 13px var(--legend); padding: 1px 6px; border-radius: 6px; border
       </button>
     </div>
 
-    <div class="dpad" role="group" aria-label="Navigation">
+    <div class="dpad" id="dpad" role="group" aria-label="Navigation">
       <button class="key arrow up" data-key="up" data-repeat aria-label="Up"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 6 5 15h14z"/></svg></button>
       <button class="key arrow left" data-key="left" data-repeat aria-label="Left"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 12l9-7v14z"/></svg></button>
       <button class="key ok" data-key="ok">OK</button>
@@ -345,7 +362,7 @@ kbd { font: 600 13px var(--legend); padding: 1px 6px; border-radius: 6px; border
       <button class="key arrow down" data-key="down" data-repeat aria-label="Down"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 18 5 9h14z"/></svg></button>
     </div>
 
-    <div class="row">
+    <div class="row" id="navRow">
       <button class="key dark pill" data-key="back" aria-label="Back">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
       </button>
@@ -354,13 +371,13 @@ kbd { font: 600 13px var(--legend); padding: 1px 6px; border-radius: 6px; border
       </button>
     </div>
 
-    <div class="row">
+    <div class="row" id="rockRow">
       <div class="rocker" role="group" aria-label="Volume">
         <button class="key" data-key="vol+" data-repeat aria-label="Volume up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
         <span class="label">Vol</span>
         <button class="key" data-key="vol-" data-repeat aria-label="Volume down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
       </div>
-      <div class="center-stack">
+      <div class="center-stack" id="playStack">
         <button class="key dark round" data-key="play" aria-label="Play or pause">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5v14l8-7zM14 5h3v14h-3zM19 5h2v14h-2z"/></svg>
         </button>
@@ -380,7 +397,7 @@ kbd { font: 600 13px var(--legend); padding: 1px 6px; border-radius: 6px; border
       </div>
     </div>
 
-    <div class="colors" role="group" aria-label="Color keys">
+    <div class="colors" id="colors" role="group" aria-label="Color keys">
       <button class="key c-red" data-key="f1" aria-label="Red (F1)"></button>
       <button class="key c-green" data-key="f2" aria-label="Green (F2)"></button>
       <button class="key c-yellow" data-key="f3" aria-label="Yellow (F3)"></button>
@@ -426,6 +443,10 @@ kbd { font: 600 13px var(--legend); padding: 1px 6px; border-radius: 6px; border
   <button class="menu-btn" data-open-add>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
     Add a box
+  </button>
+  <button class="menu-btn" id="layoutBtn" aria-pressed="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="4"/><circle cx="12" cy="9" r="3"/><path d="M9 16h.01M15 16h.01"/></svg>
+    <span id="layoutLabel">Compact layout: off</span>
   </button>
   <button class="menu-btn" id="themeBtn">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/></svg>
@@ -759,6 +780,31 @@ applyTheme(theme);
 $("#themeBtn").onclick = () => {
   theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
   store.set("mag.theme", theme); applyTheme(theme);
+};
+// layout: standard or compact (per browser)
+function applyLayout(mode) {
+  const compact = mode === "compact";
+  const top = $("#topRow"), nav = $("#navRow"), dpad = $("#dpad"), rock = $("#rockRow"),
+        play = $("#playStack"), colors = $("#colors");
+  if (compact) {
+    document.documentElement.dataset.layout = "compact";
+    top.after(nav);        // back/home under mute/power
+    play.after(colors);    // color keys between the rockers
+    play.hidden = true;    // no play/pause, rewind, forward
+  } else {
+    delete document.documentElement.dataset.layout;
+    dpad.after(nav);
+    rock.after(colors);
+    play.hidden = false;
+  }
+  $("#layoutLabel").textContent = `Compact layout: ${compact ? "on" : "off"}`;
+  $("#layoutBtn").setAttribute("aria-pressed", String(compact));
+}
+let layout = store.get("mag.layout") === "compact" ? "compact" : "standard";
+applyLayout(layout);
+$("#layoutBtn").onclick = () => {
+  layout = layout === "compact" ? "standard" : "compact";
+  store.set("mag.layout", layout); applyLayout(layout);
 };
 $("#shortcutsBtn").onclick = () => { closeDrawer(); $("#keysDlg").showModal(); };
 
