@@ -304,19 +304,39 @@ kbd { font: 600 13px var(--legend); padding: 1px 6px; border-radius: 6px; border
 }
 
 /* ------------------------------------------------------------ compact layout */
-:root[data-layout="compact"] .topbar { padding-bottom: 0; }
-:root[data-layout="compact"] main { padding-top: 0; }
-:root[data-layout="compact"] .handset { margin-top: 0; padding-top: 20px; }
-:root[data-layout="compact"] .dpad { --d: 204px; --a: 66px; --o: 102px; }
-:root[data-layout="compact"] .dpad .ok { font-size: 20px; }
-/* back/home sit right under mute/power, same width so the columns line up */
-:root[data-layout="compact"] #navRow { margin-top: 12px; }
-:root[data-layout="compact"] #navRow .key { width: 52px; min-width: 0; padding: 0; }
-/* color keys as a 2x2 block between the volume and channel rockers */
+/* Goal: the whole remote on one phone screen. The D-pad tucks up between
+   back/home, and the rockers tuck up beside its lower half. */
+:root[data-layout="compact"] .topbar { padding-top: calc(2px + env(safe-area-inset-top)); padding-bottom: 0; }
+:root[data-layout="compact"] main { padding-top: 0; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+:root[data-layout="compact"] .handset { margin-top: 0; padding: 12px 22px 18px; border-radius: 36px 36px 46px 46px; }
+:root[data-layout="compact"] .led { top: 4px; }
+:root[data-layout="compact"] #topRow .round { width: 44px; height: 44px; }
+:root[data-layout="compact"] #topRow .round svg { width: 20px; height: 20px; }
+/* back/home right under mute/power, same width so the columns line up */
+:root[data-layout="compact"] #navRow { margin-top: 8px; }
+:root[data-layout="compact"] #navRow .key { width: 44px; height: 40px; min-width: 0; padding: 0; border-radius: 20px; }
+:root[data-layout="compact"] .dpad { --d: 188px; --a: 60px; --o: 92px; margin-top: -44px; }
+:root[data-layout="compact"] .dpad .ok { font-size: 19px; }
+/* rockers rise beside the bottom of the circle; color keys sit just under it */
+:root[data-layout="compact"] #rockRow { margin-top: -44px; align-items: flex-end; }
+:root[data-layout="compact"] .rocker { height: 128px; }
 :root[data-layout="compact"] #rockRow .colors {
-  grid-template-columns: repeat(2, 52px); gap: 12px; align-content: center;
+  grid-template-columns: repeat(2, 48px); gap: 10px; align-self: end;
 }
-:root[data-layout="compact"] #rockRow .colors .key { height: 40px; border-radius: 14px; }
+:root[data-layout="compact"] #rockRow .colors .key { height: 34px; border-radius: 12px; }
+:root[data-layout="compact"] #extraRow,
+:root[data-layout="compact"] #numRow { margin-top: 12px; }
+:root[data-layout="compact"] .numpad { gap: 8px 10px; }
+:root[data-layout="compact"] .numpad .key { height: 38px; font-size: 18px; border-radius: 12px; }
+/* narrow phones (≤360px): keep the circle clear of back/home and the rockers */
+@media (max-width: 360px) {
+  :root[data-layout="compact"] .handset { padding-left: 16px; padding-right: 16px; }
+  :root[data-layout="compact"] .dpad { --d: 164px; --a: 52px; --o: 80px; margin-top: -40px; }
+  :root[data-layout="compact"] .dpad .ok { font-size: 17px; }
+  :root[data-layout="compact"] .rocker { width: 54px; }
+  :root[data-layout="compact"] #rockRow { margin-top: -28px; }
+  :root[data-layout="compact"] #rockRow .colors { grid-template-columns: repeat(2, 44px); }
+}
 </style>
 </head>
 <body>
@@ -412,7 +432,7 @@ kbd { font: 600 13px var(--legend); padding: 1px 6px; border-radius: 6px; border
       </div>
     </div>
 
-    <div class="row" style="display:block">
+    <div class="row" id="numRow" style="display:block">
       <div class="numpad" role="group" aria-label="Number keys">
         <button class="key putty" data-key="1">1</button>
         <button class="key putty" data-key="2">2</button>
@@ -447,6 +467,10 @@ kbd { font: 600 13px var(--legend); padding: 1px 6px; border-radius: 6px; border
   <button class="menu-btn" id="layoutBtn" aria-pressed="false">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="4"/><circle cx="12" cy="9" r="3"/><path d="M9 16h.01M15 16h.01"/></svg>
     <span id="layoutLabel">Compact layout: off</span>
+  </button>
+  <button class="menu-btn" id="installBtn" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+    Install app
   </button>
   <button class="menu-btn" id="themeBtn">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/></svg>
@@ -989,6 +1013,26 @@ $("#removeBtn").onclick = async () => {
     toast(`Removed ${editing.name}`);
   } catch (e) { setMsg($("#editMsg"), e.message, "error"); }
 };
+
+// installable app (Android/desktop Chrome, Edge, Samsung Internet)
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+let installPrompt = null;
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  installPrompt = e;
+  $("#installBtn").hidden = false;
+});
+$("#installBtn").onclick = async () => {
+  if (!installPrompt) return;
+  closeDrawer();
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null;
+  $("#installBtn").hidden = true;
+};
+window.addEventListener("appinstalled", () => { $("#installBtn").hidden = true; toast("Installed"); });
 
 bindKeys();
 loadBoxes();

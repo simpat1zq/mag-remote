@@ -91,6 +91,16 @@ host folder for `/data`, e.g. `/srv/mag-remote:/data`, the container's user
 - run the container as the user that owns the folder, by adding
   `user: "1000:1000"` (your `id -u`:`id -g`) to the service.
 
+## Install it on your phone
+
+The page installs as an app (its own icon, opens full screen, no browser bar).
+It must be served over **HTTPS**, e.g. behind your reverse proxy; if that uses
+a private CA, the phone has to trust that CA.
+
+- **Android (Chrome, Edge, Samsung Internet):** menu (☰) › **Install app**,
+  or the browser menu › *Install app* / *Add to Home screen*.
+- **iPhone/iPad (Safari):** Share › *Add to Home Screen*.
+
 ## Adding a box
 
 1. Open the menu (☰) › **Add a box**.
