@@ -78,8 +78,16 @@ Box passwords and pairing codes are stored in `boxes.json` in the data volume.
 There's no login by default: keep it on your LAN, set `BASIC_AUTH`, or put it
 behind your reverse proxy's authentication.
 
-If you bind-mount a host folder for `/data` instead of a named volume, make it
-writable by the container user: `chown 10001 ./data`.
+### Using a host folder instead of a named volume
+
+A named volume (as in the examples above) works as-is. If you bind-mount a
+host folder for `/data`, e.g. `/srv/mag-remote:/data`, the container's user
+(UID 10001) must be able to write to it, or it stops at startup with
+`PermissionError: ... /data/boxes.json.tmp`. Either:
+
+- give the folder to the container user: `sudo chown -R 10001:10001 /srv/mag-remote`, or
+- run the container as the user that owns the folder, by adding
+  `user: "1000:1000"` (your `id -u`:`id -g`) to the service.
 
 ## Adding a box
 

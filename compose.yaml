@@ -10,6 +10,9 @@ services:
     environment:
       PORT: "8080"            # web UI port on the host
       # BASIC_AUTH: "user:password"   # optional login for the web UI
+    # Using a host folder instead of the named volume? The container user must
+    # be able to write to it: chown it to 10001, or run as the folder's owner:
+    # user: "1000:1000"
     volumes:
       - mag-remote-data:/data # your boxes are saved here
     restart: unless-stopped
