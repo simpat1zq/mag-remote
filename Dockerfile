@@ -18,6 +18,6 @@ USER app
 VOLUME /data
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s \
-  CMD python -c "import os,urllib.request;urllib.request.urlopen('http://127.0.0.1:%s/healthz' % os.environ.get('PORT','8080'), timeout=3)"
+  CMD ["python", "-m", "magremote.health"]
 
 CMD ["python", "-m", "magremote"]
