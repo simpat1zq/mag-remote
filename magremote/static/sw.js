@@ -1,7 +1,7 @@
 // MAG Remote service worker: makes the app installable and lets the shell
 // open instantly. Network first, so updates show up right away; the API is
 // never cached (keys must reach the box live).
-const CACHE = "mag-remote-v1.2.0";
+const CACHE = "mag-remote-v1.2.1";
 const SHELL = [
   "./", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png",
   "fonts/barlow-latin-400-normal.woff2", "fonts/barlow-latin-500-normal.woff2",

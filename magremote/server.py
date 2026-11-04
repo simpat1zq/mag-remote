@@ -9,6 +9,7 @@ import logging
 import mimetypes
 import os
 import re
+import signal
 import socket
 import threading
 import time
@@ -310,10 +311,20 @@ def main():
     srv.daemon_threads = True
     log.info("MAG Remote %s listening on http://%s:%d%s", __version__, bind, port,
              " (basic auth on)" if auth else "")
+
+    # As a container's PID 1, Python ignores SIGTERM unless a handler is set,
+    # so `docker stop` would wait its full 10 s timeout before killing us.
+    def _stop(signum, _frame):
+        log.info("Stopping (signal %d)", signum)
+        raise SystemExit(0)
+
+    signal.signal(signal.SIGTERM, _stop)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
         pass
+    finally:
+        srv.server_close()
 
 
 if __name__ == "__main__":
